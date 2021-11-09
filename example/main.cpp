@@ -4,16 +4,13 @@
 
 
 int main() {
-    vmath::Vector<std::int8_t, 8> v1{1, 2, 3, 4, 5, 6, 7, 8};
-    vmath::Vector<std::int8_t, 8> v2{1, 2, 3, 4, 5, 6, 7, 8};
-    v1 += v2;
-    vmath::Vector<std::int16_t, 8> w1{1, 2, 3, 4, 5, 6, 7, 8};
-    vmath::Vector<std::int16_t, 8> w2{8, 2, 3, 4, 5, 6, 7, 8};
-    w1 += w2;
-    vmath::Vector<std::int16_t, 4> y1{1, 2, 3, 0xffff};
-    y1 <<= 1;
-    std::printf("%x\n", v1[0]);
-    std::printf("%x\n", w1[0]);
-    std::printf("%x\n", y1[3]);
+    vmath::Vector<std::uint32_t, 4> v1{1, 2, 3, 4};
+    vmath::Vector<std::uint32_t, 4> v2{4, 3, 2, 1};
+    v1 += -v2;
+    vmath::Vector<std::uint32_t, 8> w1{1, 2, 3, 4, 5, 6, 7, 8};
+    vmath::Vector<std::uint32_t, 8> w2{5, 6, 7, 8, 4, 3, 2, 1};
+    w1 += -w2;
+    std::printf("%d\n", v1[0]);
+    std::printf("%d\n", w1[0]);
     return 0;
 }
