@@ -28,6 +28,7 @@ struct vtype {
     static constexpr auto load = _prefix ## _setr_epi ## _size; \
     static constexpr auto load1 = _prefix ## _set1_epi ## _size; \
     static constexpr auto store = _prefix ## _store_si ## _type_bits; \
+    static constexpr auto storeu = _prefix ## _storeu_epi ## _size; \
     static constexpr auto abs = _prefix ## _abs_epi ## _size; \
     static constexpr auto add = _prefix ## _add_epi ## _size; \
     static constexpr auto mul = _prefix ## _mullo_epi ## _size; \
@@ -59,6 +60,7 @@ struct vtype {
     static constexpr auto load = _prefix ## _setr_ ## _postfix; \
     static constexpr auto load1 = _prefix ## _set1_ ## _postfix; \
     static constexpr auto store = _prefix ## _store_ ## _postfix; \
+    static constexpr auto storeu = _prefix ## _storeu_ ## _postfix; \
     static constexpr auto abs = [](type& v) { \
         __m ## _type_bits ## i minus1 = _prefix ## _set1_epi32(-1); \
         _type mask = _prefix ## _castsi ## _type_bits ## _ ## _postfix(_prefix ## _srli_epi ## _base_bits(minus1, 1)); \
@@ -70,6 +72,7 @@ struct vtype {
     static constexpr auto sub = _prefix ## _sub_ ## _postfix; \
     static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix;                              \
     static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix;                            \
+    static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix;                            \
 }
 
 #define TYPEM128I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)

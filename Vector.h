@@ -184,9 +184,8 @@ struct Vector {
         return Vector<T, n>{-1}.andnot(*this);
     }
 
-    Vector<T, n> abs() const {
-        return Vector<T, n>{type::abs(base)};
-    }
+    Vector<T, n> abs() const { return Vector<T, n>{type::abs(base)}; }
+    Vector<T, n> sqrt() const { return Vector<T, n>{type::sqrt(base)}; }
 
     template<Compatible<T> S>
     Vector<T, n> andnot(const Vector<S, n>& other) const {
@@ -202,9 +201,17 @@ struct Vector {
         }
     }
 
+    void storeu(T* dest) const { type::storeu(dest, base); }
+
     std::array<T, n> data() const {
         constexpr size_t alignment = sizeof(T) * n == 16 ? 16 : 32;
         alignas(alignment) std::array<T, n> data;
+        store(data.data());
+        return data;
+    }
+
+    std::array<T, n> datau() const {
+        std::array<T, n> data;
         store(data.data());
         return data;
     }
@@ -228,5 +235,10 @@ template<typename T, size_t n, typename S>
 Vector<T, n> operator*(const S& other, const Vector<T, n>& v) {
     return v * other;
 }
+
+template<typename T>
+using Vect128 = Vector<T, 128 / (8 * sizeof(T))>;
+template<typename T>
+using Vect256 = Vector<T, 256 / (8 * sizeof(T))>;
 
 }
