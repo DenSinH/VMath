@@ -195,7 +195,7 @@ struct Vector {
 
     void store(T* dest) const {
         if constexpr(std::is_integral_v<T>) {
-            type::store(dest, base);
+            type::store(reinterpret_cast<vmath::vtype_t<signed_T, n>*>(dest), base);
         }
         else {
             type::store(dest, base);
