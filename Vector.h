@@ -10,16 +10,34 @@ namespace vmath {
 template<typename T, typename S>
 concept Compatible = std::is_same_v<S, T> || std::is_same_v<std::make_unsigned_t<S>, std::make_unsigned_t<T>>;
 
-#define IOP(_symbol) \
+#define VMATH_IOP_HELPER(_symbol) \
     template<typename S> \
 Vector<T, n>& operator _symbol ## =(S other) { \
     base = (*this _symbol other).base; \
     return *this; \
 }
 
+namespace detail {
+
+template<typename T>
+struct identity { using type = T; };
+
+template<typename T>
+using try_make_signed =
+typename std::conditional<
+        std::is_integral<T>::value,
+        std::make_signed<T>,
+        identity<T>
+>::type;
+
+template<typename T>
+using try_make_signed_t = typename try_make_signed<T>::type;
+
+}
+
 template<typename T, size_t n>
 struct Vector {
-    using signed_T = std::conditional_t<std::is_integral_v<T>, std::make_signed_t<T>, T>;
+    using signed_T = detail::try_make_signed_t<T>;
     using type = vtype<signed_T, n>;
 
     vtype_t<signed_T, n> base;
@@ -55,18 +73,28 @@ struct Vector {
 
     template<Compatible<T> S>
     Vector<std::common_type_t<S, T>, n> operator*(const Vector<S, n>& other) const {
-        if constexpr(std::is_signed_v<T>) {
-            return Vector<std::common_type_t<S, T>, n>{type::imul(base, other.base)};
+        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
+            return Vector<std::common_type_t<S, T>, n>{type::mul(base, other.base)};
         }
         else {
             return Vector<std::common_type_t<S, T>, n>{type::umul(base, other.base)};
         }
     }
 
+    template<typename S>
+    Vector<T, n> operator*(const S& other) const {
+        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
+            return Vector<std::common_type_t<S, T>, n>{type::mul(base, Vector<T, n>{(T)other}.base)};
+        }
+        else {
+            return Vector<std::common_type_t<S, T>, n>{type::umul(base, Vector<T, n>{(T)other}.base)};
+        }
+    }
+
     template<Compatible<T> S>
     Vector<std::common_type_t<S, T>, n> operator/(const Vector<S, n>& other) const {
-        if constexpr(std::is_signed_v<T>) {
-            return Vector<std::common_type_t<S, T>, n>{type::idiv(base, other.base)};
+        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
+            return Vector<std::common_type_t<S, T>, n>{type::div(base, other.base)};
         }
         else {
             return Vector<std::common_type_t<S, T>, n>{type::udiv(base, other.base)};
@@ -118,14 +146,66 @@ struct Vector {
         }
     }
 
+    template<Compatible<T> S>
+    Vector<T, n> operator>(const Vector<S, n>& other) const {
+        return Vector<T, n>{type::cmpgt(base, other.base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> operator==(const Vector<S, n>& other) const {
+        return Vector<T, n>{type::cmpeq(base, other.base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> operator>=(const Vector<S, n>& other) const {
+        return (*this > other) | (*this == other);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> operator!=(const Vector<S, n>& other) const {
+        return !(*this == other);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> operator<=(const Vector<S, n>& other) const {
+        return !(*this > other);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> operator<(const Vector<S, n>& other) const {
+        return (*this <= other).andnot(*this == other);
+    }
+
     Vector<T, n> operator-() const {
         return Vector<T, n>{0} - *this;
+    }
+
+    Vector<T, n> operator!() const {
+        return Vector<T, n>{-1}.andnot(*this);
+    }
+
+    Vector<T, n> abs() const {
+        return Vector<T, n>{type::abs(base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> andnot(const Vector<S, n>& other) const {
+        return Vector<T, n>{type::andnot(base, other.base)};
+    }
+
+    void store(T* dest) const {
+        if constexpr(std::is_integral_v<T>) {
+            type::store(dest, base);
+        }
+        else {
+            type::store(dest, base);
+        }
     }
 
     std::array<T, n> data() const {
         constexpr size_t alignment = sizeof(T) * n == 16 ? 16 : 32;
         alignas(alignment) std::array<T, n> data;
-        type::store(reinterpret_cast<vmath::vtype_t<signed_T, n>*>(data.data()), base);
+        store(data.data());
         return data;
     }
 
@@ -133,16 +213,20 @@ struct Vector {
         return data()[index];
     }
 
-    IOP(+)
-    IOP(-)
-    IOP(*)
-    IOP(/)
-    IOP(<<)
-    IOP(>>)
-    IOP(&)
-    IOP(|)
-    IOP(^)
+    VMATH_IOP_HELPER(+)
+    VMATH_IOP_HELPER(-)
+    VMATH_IOP_HELPER(*)
+    VMATH_IOP_HELPER(/)
+    VMATH_IOP_HELPER(<<)
+    VMATH_IOP_HELPER(>>)
+    VMATH_IOP_HELPER(&)
+    VMATH_IOP_HELPER(|)
+    VMATH_IOP_HELPER(^)
 };
 
+template<typename T, size_t n, typename S>
+Vector<T, n> operator*(const S& other, const Vector<T, n>& v) {
+    return v * other;
+}
 
 }

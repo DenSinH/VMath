@@ -23,31 +23,57 @@ struct vtype {
 
 };
 
-//#define _mm_slli_pi8 nullptr
-//#define _mm_srai_pi8 nullptr
-//#define _mm_srli_pi8 nullptr
-//
-//#define TYPEM64(_size) template<> struct vtype<std::int ## _size ## _t, 64 / _size> { \
-//    using type = __m64;                                                     \
-//    static constexpr auto load = _mm_setr_pi ## _size; \
-//    static constexpr auto store = [](void* dest, const type& v) { std::memcpy(dest, &v, sizeof(type)); }; \
-//    static constexpr auto abs = _mm_abs_pi ## _size; \
-//    static constexpr auto add = _mm_add_pi ## _size; \
-//    static constexpr auto and_ = _m_pand; \
-//    static constexpr auto andnot = _m_pandn; \
-//    static constexpr auto xor_ = _m_pxor; \
-//    static constexpr auto sub = _mm_sub_pi ## _size; \
-//    static constexpr auto neg = _mm_sign_pi ## _size; \
-//    static constexpr auto shli = _mm_slli_pi ## _size; \
-//    static constexpr auto shrai = _mm_srai_pi ## _size; \
-//    static constexpr auto shrli = _mm_srli_pi ## _size; \
-//    static constexpr auto cmpeq = _mm_cmpeq_pi ## _size;                              \
-//    static constexpr auto cmpgt = _mm_cmpgt_pi ## _size;                              \
-//}
-//
-//TYPEM64(8);
-//TYPEM64(16);
-//TYPEM64(32);
+#define INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
+    using type = _type; \
+    static constexpr auto load = _prefix ## _setr_epi ## _size; \
+    static constexpr auto load1 = _prefix ## _set1_epi ## _size; \
+    static constexpr auto store = _prefix ## _store_si ## _type_bits; \
+    static constexpr auto abs = _prefix ## _abs_epi ## _size; \
+    static constexpr auto add = _prefix ## _add_epi ## _size; \
+    static constexpr auto mul = _prefix ## _mullo_epi ## _size; \
+    static constexpr auto umul = _prefix ## _mul_epu ## _size; \
+    static constexpr auto div = nullptr; \
+    static constexpr auto udiv = nullptr; \
+    static constexpr auto and_ = _prefix ## _and_si ## _type_bits; \
+    static constexpr auto andnot = _prefix ## _andnot_si ## _type_bits; \
+    static constexpr auto xor_ = _prefix ## _xor_si ## _type_bits; \
+    static constexpr auto or_ = _prefix ## _or_si ## _type_bits; \
+    static constexpr auto sub = _prefix ## _sub_epi ## _size; \
+    static constexpr auto shli = _prefix ## _slli_epi ## _size; \
+    static constexpr auto shrai = _prefix ## _srai_epi ## _size; \
+    static constexpr auto shrli = _prefix ## _srli_epi ## _size; \
+    static constexpr auto shlv = _prefix ## _sllv_epi ## _size; \
+    static constexpr auto shrav = _prefix ## _srav_epi ## _size; \
+    static constexpr auto shrlv = _prefix ## _srlv_epi ## _size; \
+    static constexpr auto cmpeq = _prefix ## _cmpeq_epi ## _size;                              \
+    static constexpr auto cmpgt = _prefix ## _cmpgt_epi ## _size;                            \
+}
+
+#define _mm256_cmpeq_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_EQ_OS); }
+#define _mm256_cmpeq_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_EQ_OS); }
+#define _mm256_cmpgt_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OS); }
+#define _mm256_cmpgt_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_GT_OS); }
+
+#define FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
+    using type = _type; \
+    static constexpr auto load = _prefix ## _setr_ ## _postfix; \
+    static constexpr auto load1 = _prefix ## _set1_ ## _postfix; \
+    static constexpr auto store = _prefix ## _store_ ## _postfix; \
+    static constexpr auto abs = [](type& v) { \
+        __m ## _type_bits ## i minus1 = _prefix ## _set1_epi32(-1); \
+        _type mask = _prefix ## _castsi ## _type_bits ## _ ## _postfix(_prefix ## _srli_epi ## _base_bits(minus1, 1)); \
+        return _prefix ## _and_ ## _postfix(mask, v); \
+    }; \
+    static constexpr auto add = _prefix ## _add_ ## _postfix; \
+    static constexpr auto mul = _prefix ## _mul_ ## _postfix; \
+    static constexpr auto div = _prefix ## _div_ ## _postfix; \
+    static constexpr auto sub = _prefix ## _sub_ ## _postfix; \
+    static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix;                              \
+    static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix;                            \
+}
+
+#define TYPEM128I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)
+#define TYPEM256I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m256i, 256, _mm256)
 
 #define _mm_slli_epi8 nullptr
 #define _mm_srai_epi8 nullptr
@@ -60,31 +86,7 @@ struct vtype {
 #define _mm_mul_epu16 nullptr
 #define _mm_mul_epu64 nullptr
 
-#define TYPEM128(_size) template<> struct vtype<std::int ## _size ## _t, 128 / _size> { \
-    using type = __m128i;                                                     \
-    static constexpr auto load = _mm_setr_epi ## _size; \
-    static constexpr auto load1 = _mm_set1_epi ## _size; \
-    static constexpr auto store = _mm_store_si128; \
-    static constexpr auto abs = _mm_abs_epi ## _size; \
-    static constexpr auto add = _mm_add_epi ## _size; \
-    static constexpr auto imul = _mm_mullo_epi ## _size; \
-    static constexpr auto umul = _mm_mul_epu ## _size; \
-    static constexpr auto idiv = nullptr; \
-    static constexpr auto udiv = nullptr; \
-    static constexpr auto and_ = _mm_and_si128; \
-    static constexpr auto andnot = _mm_andnot_si128; \
-    static constexpr auto xor_ = _mm_xor_si128; \
-    static constexpr auto or_ = _mm_or_si128; \
-    static constexpr auto sub = _mm_sub_epi ## _size; \
-    static constexpr auto shli = _mm_slli_epi ## _size; \
-    static constexpr auto shrai = _mm_srai_epi ## _size; \
-    static constexpr auto shrli = _mm_srli_epi ## _size; \
-    static constexpr auto shlv = _mm_sllv_epi ## _size; \
-    static constexpr auto shrav = _mm_srav_epi ## _size; \
-    static constexpr auto shrlv = _mm_srlv_epi ## _size; \
-    static constexpr auto cmpeq = _mm_cmpeq_epi ## _size;                              \
-    static constexpr auto cmpgt = _mm_cmpgt_epi ## _size;                              \
-}
+#define TYPEM128(_size) TYPEM128I_HELPER(_size)
 
 TYPEM128(8);
 TYPEM128(16);
@@ -104,56 +106,18 @@ TYPEM128(64);
 #define _mm256_setr_epi64 _mm256_setr_epi64x
 #define _mm256_set1_epi64 _mm256_set1_epi64x
 
-#define TYPEM256(_size) template<> struct vtype<std::int ## _size ## _t, 256 / _size> { \
-    using type = __m256i;                                                     \
-    static constexpr auto load = _mm256_setr_epi ## _size; \
-    static constexpr auto load1 = _mm256_set1_epi ## _size; \
-    static constexpr auto store = _mm256_store_si256; \
-    static constexpr auto abs = _mm256_abs_epi ## _size; \
-    static constexpr auto add = _mm256_add_epi ## _size; \
-    static constexpr auto imul = _mm256_mullo_epi ## _size; \
-    static constexpr auto umul = _mm256_mul_epu ## _size; \
-    static constexpr auto idiv = nullptr; \
-    static constexpr auto udiv = nullptr; \
-    static constexpr auto and_ = _mm256_and_si256; \
-    static constexpr auto andnot = _mm256_andnot_si256; \
-    static constexpr auto xor_ = _mm256_xor_si256; \
-    static constexpr auto or_ = _mm256_or_si256; \
-    static constexpr auto sub = _mm256_sub_epi ## _size; \
-    static constexpr auto shli = _mm256_slli_epi ## _size; \
-    static constexpr auto shrai = _mm256_srai_epi ## _size; \
-    static constexpr auto shrli = _mm256_srli_epi ## _size; \
-    static constexpr auto shlv = _mm256_sllv_epi ## _size; \
-    static constexpr auto shrav = _mm256_srav_epi ## _size; \
-    static constexpr auto shrlv = _mm256_srlv_epi ## _size; \
-    static constexpr auto cmpeq = _mm256_cmpeq_epi ## _size;                              \
-    static constexpr auto cmpgt = _mm256_cmpgt_epi ## _size;                              \
-}
+#define TYPEM256(_size) TYPEM256I_HELPER(_size)
 
 TYPEM256(8);
 TYPEM256(16);
 TYPEM256(32);
 TYPEM256(64);
 
-template<>
-struct vtype<float, 4> {
-    using type = __m128;
-};
+FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
+FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);
+FP_TYPE_HELPER(float, 32, __m256, 256, _mm256, ps);
+FP_TYPE_HELPER(double, 64, __m256d, 256, _mm256, pd);
 
-template<>
-struct vtype<double, 2> {
-    using type = __m128d;
-};
-
-template<>
-struct vtype<float, 8> {
-    using type = __m256;
-};
-
-template<>
-struct vtype<double, 4> {
-    using type = __m256d;
-};
 
 template<typename T, size_t n>
 using vtype_t = typename vtype<T, n>::type;
