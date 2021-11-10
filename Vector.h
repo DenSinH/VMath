@@ -81,13 +81,12 @@ struct Vector {
         }
     }
 
-    template<typename S>
-    Vector<T, n> operator*(const S& other) const {
+    Vector<T, n> operator*(const T& other) const {
         if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
-            return Vector<std::common_type_t<S, T>, n>{type::mul(base, Vector<T, n>{(T)other}.base)};
+            return Vector<T, n>{type::mul(base, Vector<T, n>{other}.base)};
         }
         else {
-            return Vector<std::common_type_t<S, T>, n>{type::umul(base, Vector<T, n>{(T)other}.base)};
+            return Vector<T, n>{type::umul(base, Vector<T, n>{other}.base)};
         }
     }
 
@@ -190,6 +189,33 @@ struct Vector {
     template<Compatible<T> S>
     Vector<T, n> andnot(const Vector<S, n>& other) const {
         return Vector<T, n>{type::andnot(base, other.base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> min(const Vector<S, n>& other) const {
+        return Vector<T, n>{type::min(base, other.base)};
+    }
+
+    Vector<T, n> min(T other) const {
+        return min(Vector<T, n>{other});
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> max(const Vector<S, n>& other) const {
+        return Vector<T, n>{type::max(base, other.base)};
+    }
+
+    Vector<T, n> max(T other) const {
+        return max(Vector<T, n>{other});
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> clamp(const Vector<S, n>& min, const Vector<S, n>& max) const {
+        return min.max(this->min(Vector<T, n>{max}));
+    }
+
+    Vector<T, n> clamp(T min, T max) const {
+        return clamp(Vector<T, n>{min}, Vector<T, n>{max});
     }
 
     void store(T* dest) const {

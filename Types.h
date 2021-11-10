@@ -48,6 +48,8 @@ struct vtype {
     static constexpr auto shrlv = _prefix ## _srlv_epi ## _size; \
     static constexpr auto cmpeq = _prefix ## _cmpeq_epi ## _size;                              \
     static constexpr auto cmpgt = _prefix ## _cmpgt_epi ## _size;                            \
+    static constexpr auto min = _prefix ## _min_epi ## _size;                            \
+    static constexpr auto max = _prefix ## _max_epi ## _size;                            \
 }
 
 #define _mm256_cmpeq_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_EQ_OS); }
@@ -73,6 +75,8 @@ struct vtype {
     static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix;                              \
     static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix;                            \
     static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix;                            \
+    static constexpr auto min = _prefix ## _min_ ## _postfix;                            \
+    static constexpr auto max = _prefix ## _max_ ## _postfix;                            \
 }
 
 #define TYPEM128I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)

@@ -14,7 +14,7 @@ int main() {
     vmath::Vect256<double> y2{5, 6, 7, 8};
     y1 /= y2 * y1 + y1;
     y1 *= 2;
-    y1 = y1.sqrt();
+    y1 = y1.sqrt().clamp(0, 0.5);
     std::printf("%d\n", v1[0]);
     std::printf("%d\n", w1[0]);
     std::printf("%f\n", y1[0]);
