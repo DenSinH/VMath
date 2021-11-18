@@ -267,4 +267,6 @@ using Vect128 = Vector<T, 128 / (8 * sizeof(T))>;
 template<typename T>
 using Vect256 = Vector<T, 256 / (8 * sizeof(T))>;
 
+#undef VMATH_IOP_HELPER
+
 }

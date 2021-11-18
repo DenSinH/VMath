@@ -16,7 +16,7 @@ struct vtype {
 
 };
 
-#define INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
+#define VMATH_INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
     using type = _type; \
     static constexpr auto load = _prefix ## _setr_epi ## _size; \
     static constexpr auto load1 = _prefix ## _set1_epi ## _size; \
@@ -50,7 +50,7 @@ struct vtype {
 #define _mm256_cmpgt_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OS); }
 #define _mm256_cmpgt_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_GT_OS); }
 
-#define FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
+#define VMATH_FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
     using type = _type; \
     static constexpr auto load = _prefix ## _setr_ ## _postfix; \
     static constexpr auto load1 = _prefix ## _set1_ ## _postfix; \
@@ -72,8 +72,8 @@ struct vtype {
     static constexpr auto max = _prefix ## _max_ ## _postfix;                            \
 }
 
-#define TYPEM128I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)
-#define TYPEM256I_HELPER(_size) INTEGRAL_TYPE_HELPER(_size, __m256i, 256, _mm256)
+#define VMATH_TYPEM128I_HELPER(_size) VMATH_INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)
+#define VMATH_TYPEM256I_HELPER(_size) VMATH_INTEGRAL_TYPE_HELPER(_size, __m256i, 256, _mm256)
 
 #define _mm_slli_epi8 nullptr
 #define _mm_srai_epi8 nullptr
@@ -86,12 +86,11 @@ struct vtype {
 #define _mm_mul_epu16 nullptr
 #define _mm_mul_epu64 nullptr
 
-#define TYPEM128(_size) TYPEM128I_HELPER(_size)
 
-TYPEM128(8);
-TYPEM128(16);
-TYPEM128(32);
-TYPEM128(64);
+VMATH_TYPEM128I_HELPER(8);
+VMATH_TYPEM128I_HELPER(16);
+VMATH_TYPEM128I_HELPER(32);
+VMATH_TYPEM128I_HELPER(64);
 
 #define _mm256_slli_epi8 nullptr
 #define _mm256_srai_epi8 nullptr
@@ -106,20 +105,23 @@ TYPEM128(64);
 #define _mm256_setr_epi64 _mm256_setr_epi64x
 #define _mm256_set1_epi64 _mm256_set1_epi64x
 
-#define TYPEM256(_size) TYPEM256I_HELPER(_size)
+VMATH_TYPEM256I_HELPER(8);
+VMATH_TYPEM256I_HELPER(16);
+VMATH_TYPEM256I_HELPER(32);
+VMATH_TYPEM256I_HELPER(64);
 
-TYPEM256(8);
-TYPEM256(16);
-TYPEM256(32);
-TYPEM256(64);
-
-FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
-FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);
-FP_TYPE_HELPER(float, 32, __m256, 256, _mm256, ps);
-FP_TYPE_HELPER(double, 64, __m256d, 256, _mm256, pd);
+VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
+VMATH_FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);
+VMATH_FP_TYPE_HELPER(float, 32, __m256, 256, _mm256, ps);
+VMATH_FP_TYPE_HELPER(double, 64, __m256d, 256, _mm256, pd);
 
 
 template<typename T, size_t n>
 using vtype_t = typename vtype<T, n>::type;
 
 }
+
+#undef VMATH_FP_TYPE_HELPER
+#undef VMATH_INTEGRAL_TYPE_HELPER
+#undef VMATH_TYPEM128I_HELPER
+#undef VMATH_TYPEM256I_HELPER
