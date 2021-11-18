@@ -7,13 +7,6 @@
 
 namespace vmath {
 
-namespace detail {
-
-template<typename T>
-concept unsigned_integral = std::is_integral_v<T> && std::is_unsigned_v<T>;
-
-}
-
 /*
  * https://www.cism.ucl.ac.be/Services/Formations/ICS/ics_2013.0.028/composerxe/Documentation/en_US/compiler_c/main_cls/GUID-014B2DB6-B363-4CEB-97EC-74CD6A018106.htm
  * */
