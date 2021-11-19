@@ -242,8 +242,9 @@ struct Vector {
         return data;
     }
 
-    T operator[](size_t index) const {
-        return data()[index];
+    template<int imm8>
+    T get() const {
+        return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
     }
 
     VMATH_IOP_HELPER(+)

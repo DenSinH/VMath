@@ -15,8 +15,8 @@ int main() {
     y1 /= y2 * y1 + y1;
     y1 *= 2;
     y1 = y1.sqrt().clamp(0, 0.5);
-    std::printf("%d\n", v1[0]);
-    std::printf("%d\n", w1[0]);
-    std::printf("%f\n", y1[0]);
+    std::printf("%d\n", v1.get<0>());
+    std::printf("%d\n", w1.get<0>());
+    std::printf("%f\n", y1.get<0>());
     return 0;
 }

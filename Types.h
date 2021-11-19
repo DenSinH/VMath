@@ -16,12 +16,15 @@ struct vtype {
 
 };
 
+#define _vmath_mm_extract_epi(_size, _type, _prefix) []<int imm8>(_type vec) { return _prefix ## _extract_epi ## _size (vec, imm8); }
+
 #define VMATH_INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
     using type = _type; \
     static constexpr auto load = _prefix ## _setr_epi ## _size; \
     static constexpr auto load1 = _prefix ## _set1_epi ## _size; \
     static constexpr auto store = _prefix ## _store_si ## _type_bits; \
     static constexpr auto storeu = _prefix ## _storeu_epi ## _size; \
+    static constexpr auto extract = _vmath_mm_extract_epi(_size, _type, _prefix); \
     static constexpr auto abs = _prefix ## _abs_epi ## _size; \
     static constexpr auto add = _prefix ## _add_epi ## _size; \
     static constexpr auto mul = _prefix ## _mullo_epi ## _size; \
@@ -45,17 +48,13 @@ struct vtype {
     static constexpr auto max = _prefix ## _max_epi ## _size;                            \
 }
 
-#define _mm256_cmpeq_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_EQ_OS); }
-#define _mm256_cmpeq_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_EQ_OS); }
-#define _mm256_cmpgt_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OS); }
-#define _mm256_cmpgt_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_GT_OS); }
-
 #define VMATH_FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
     using type = _type; \
     static constexpr auto load = _prefix ## _setr_ ## _postfix; \
     static constexpr auto load1 = _prefix ## _set1_ ## _postfix; \
     static constexpr auto store = _prefix ## _store_ ## _postfix; \
     static constexpr auto storeu = _prefix ## _storeu_ ## _postfix; \
+    static constexpr auto extract = _vmath_mm_extract_epi(_base_bits, __m ## _type_bits ## i, _prefix); \
     static constexpr auto abs = [](type& v) { \
         __m ## _type_bits ## i minus1 = _prefix ## _set1_epi32(-1); \
         _type mask = _prefix ## _castsi ## _type_bits ## _ ## _postfix(_prefix ## _srli_epi ## _base_bits(minus1, 1)); \
@@ -109,6 +108,12 @@ VMATH_TYPEM256I_HELPER(8);
 VMATH_TYPEM256I_HELPER(16);
 VMATH_TYPEM256I_HELPER(32);
 VMATH_TYPEM256I_HELPER(64);
+
+
+#define _mm256_cmpeq_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_EQ_OS); }
+#define _mm256_cmpeq_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_EQ_OS); }
+#define _mm256_cmpgt_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OS); }
+#define _mm256_cmpgt_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_GT_OS); }
 
 VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
 VMATH_FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);
