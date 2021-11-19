@@ -3,6 +3,7 @@
 #include "Types.h"
 
 #include <array>
+#include <tuple>
 
 
 namespace vmath {
@@ -19,6 +20,9 @@ Vector<T, n>& operator _symbol ## =(S other) { \
 
 namespace detail {
 
+/*
+ * For making an arbitrary type signed if possible
+ * */
 template<typename T>
 struct identity { using type = T; };
 
@@ -33,18 +37,39 @@ typename std::conditional<
 template<typename T>
 using try_make_signed_t = typename try_make_signed<T>::type;
 
+/*
+ * For creating a tuple with a fixed size, with given first elements
+ * */
+template<int n, typename T>
+using copy_t = T;
+
+template<typename T, typename... Args, size_t... Is, size_t... As>
+auto fill_tuple_impl(std::index_sequence<Is...>, std::index_sequence<As...>, Args... args) {
+    return std::tuple<typename detail::copy_t<Is, T>...>{args..., ((void)As, 0)...};
+}
+
+template<typename T, int n, typename... Args>
+auto fill_tuple(Args... args) {
+    return detail::fill_tuple_impl<T>(std::make_index_sequence<n>{}, std::make_index_sequence<n - sizeof...(Args)>{}, args...);
+}
+
 }
 
 template<typename T, size_t n>
 struct Vector {
+private:
+    // removing this static assert and instantiating a Vector<double, 8> blows up clang
+    static_assert(n * sizeof(T) * 8 <= 256);
     using signed_T = detail::try_make_signed_t<T>;
-    using type = vtype<signed_T, n>;
+    static constexpr size_t base_n = (8 * sizeof(T) * n < 128) ? 128 / (8 * sizeof(T)) : 256 / (8 * sizeof(T));
+    using type = vtype<signed_T, base_n>;
 
-    vtype_t<signed_T, n> base;
+    vtype_t<signed_T, base_n> base;
 
+public:
     template<typename... Args>
     requires (sizeof...(Args) == n)
-    Vector(Args... args) : base(type::load((signed_T)args...)) {
+    Vector(Args... args) : base(std::apply(type::load, detail::fill_tuple<signed_T, base_n>((signed_T)args...))) {
 
     }
 
@@ -52,12 +77,7 @@ struct Vector {
 
     }
 
-    template<Compatible<T> S>
-    Vector(const vtype_t<S, n>& other) : base(other.base) {
-
-    }
-
-    Vector(const vtype_t<signed_T, n>& other) : base(other) {
+    Vector(const vtype_t<signed_T, base_n>& other) : base(other) {
 
     }
 
@@ -230,7 +250,7 @@ struct Vector {
     void storeu(T* dest) const { type::storeu(dest, base); }
 
     std::array<T, n> data() const {
-        constexpr size_t alignment = sizeof(T) * n == 16 ? 16 : 32;
+        constexpr size_t alignment = sizeof(T) * base_n;
         alignas(alignment) std::array<T, n> data;
         store(data.data());
         return data;
@@ -243,6 +263,7 @@ struct Vector {
     }
 
     template<int imm8>
+    requires (0 <= imm8) && (imm8 < n)
     T get() const {
         return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
     }
