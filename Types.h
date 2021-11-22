@@ -146,6 +146,7 @@ VMATH_TYPEM128I_HELPER(16);
 VMATH_TYPEM128I_HELPER(32);
 VMATH_TYPEM128I_HELPER(64);
 
+
 #define _mm256_slli_epi8 nullptr
 #define _mm256_srai_epi8 nullptr
 #define _mm256_srli_epi8 nullptr
@@ -171,6 +172,7 @@ VMATH_TYPEM128I_HELPER(64);
 #define _vmath_mm256_permutexvar_epi32 [](auto idx, auto a) { return _mm256_permutexvar_epi32(idx, a); }
 #define _vmath_mm256_permutexvar_epi64 _mm256_permutexvar_epi64
 
+
 VMATH_TYPEM256I_HELPER(8);
 VMATH_TYPEM256I_HELPER(16);
 VMATH_TYPEM256I_HELPER(32);
@@ -185,6 +187,7 @@ VMATH_TYPEM256I_HELPER(64);
 #define _vmath_mm_permutexvar_pd [](auto idx, auto a) { return _mm_permutexvar_pd(a, idx); }
 #define _vmath_mm256_permutexvar_ps [](auto idx, auto a) { return _mm256_permutexvar_ps(a, idx); }
 #define _vmath_mm256_permutexvar_pd [](auto idx, auto a) { return _mm256_permutexvar_pd(a, idx); }
+
 
 VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
 VMATH_FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);

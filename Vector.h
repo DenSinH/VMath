@@ -13,7 +13,7 @@ template<typename T, typename S>
 concept Compatible = std::is_same_v<S, T> || std::is_same_v<std::make_unsigned_t<S>, std::make_unsigned_t<T>>;
 
 #define VMATH_IOP_HELPER(_symbol) \
-    template<typename S> \
+template<typename S> \
 Vector<T, n>& operator _symbol ## =(S other) { \
     base = (*this _symbol other).base; \
     return *this; \
@@ -42,7 +42,7 @@ Vector<std::common_type_t<S, T>, n> maskz_ ## _name(const Vector<S, n>& other, m
 }
 
 #define VMATH_SIGNED_OPERATOR_HELPER(_symbol, _name) \
-    template<Compatible<T> S> \
+template<Compatible<T> S> \
 Vector<std::common_type_t<S, T>, n> operator _symbol(const Vector<S, n>& other) const { \
     if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) { \
         return Vector<std::common_type_t<S, T>, n>{type::_name(base, other.base)}; \
