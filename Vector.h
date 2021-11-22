@@ -332,22 +332,22 @@ struct Vector {
     }
 
     Vector<T, n> rsqrt() const {
-        return Vector<T, n>{type::sqrt(base)};
+        return Vector<T, n>{type::rsqrt(base)};
     }
 
     template<Compatible<T> S>
     Vector<T, n> mask_rsqrt(mask_t mask, const Vector<S, n>& src) const {
-        return Vector<T, n>{type::mask_sqrt(src.base, mask, base)};
+        return Vector<T, n>{type::mask_rsqrt(src.base, mask, base)};
     }
 
     template<Compatible<T> S>
     Vector<T, n> mask_rsqrt(mask_t mask) const {
-        return mask_sqrt(mask, *this);
+        return mask_rsqrt(mask, *this);
     }
 
     template<Compatible<T> S>
     Vector<T, n> maskz_rsqrt(mask_t mask) const {
-        return Vector<T, n>{type::maskz_sqrt(mask, base)};
+        return Vector<T, n>{type::maskz_rsqrt(mask, base)};
     }
 
     template<Compatible<T> S>
