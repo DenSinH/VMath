@@ -15,16 +15,20 @@ struct Matrix {
     template<size_t... s>
     requires ((s <= m) && ...) && (sizeof...(s) <= n)
     constexpr Matrix(const T (&...list)[s]) {
+        // copy input data
         std::array<std::array<T, m>, n> data{};
         auto pos = data.data();
-        ((std::copy(list, list + s, pos->data()), pos += n), ...);
+        ((std::copy(list, list + s, pos->data()), pos++), ...);
+
+        // transpose data
         alignas(sizeof(T) * Vector<T, n>::base_n) std::array<std::array<T, Vector<T, n>::base_n>, m> transpose{};
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < m; j++) {
+        for (int j = 0; j < m; j++) {
+            for (int i = 0; i < n; i++) {
                 transpose[j][i] = data[i][j];
             }
         }
 
+        // assign columns
         for (int j = 0; j < m; j++) {
             columns[j] = Vector<T, n>::load(transpose[j].data());
         }
@@ -54,10 +58,8 @@ struct Matrix {
     }
 
     Matrix<T, n, m> operator+(const Matrix<T, n, m>& other) const {
-        Matrix<T, n, m> result{};
-        for (int i = 0; i < m; i++) {
-            result.columns[i] = columns[i] + other.columns[i];
-        }
+        Matrix<T, n, m> result = *this;
+        result += other;
         return result;
     }
 

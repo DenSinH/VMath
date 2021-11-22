@@ -19,6 +19,65 @@ Vector<T, n>& operator _symbol ## =(S other) { \
     return *this; \
 }
 
+#define VMATH_BASIC_OPERATOR_HELPER(_symbol, _name) \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> operator _symbol(const Vector<S, n>& other) const { \
+    return Vector<std::common_type_t<S, T>, n>{type:: _name(base, other.base)}; \
+} \
+
+#define VMATH_BASIC_OPERATOR_MASK_HELPER(_name) \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> mask_ ## _name(const Vector<S, n>& other, mask_t mask, const Vector<S, n>& src) const { \
+    return Vector<std::common_type_t<S, T>, n>{type::mask_ ## _name(src.base, mask, base, other.base)}; \
+} \
+ \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> mask_ ## _name(const Vector<S, n>& other, mask_t mask) const { \
+    return mask_ ## _name(other, mask, *this); \
+} \
+ \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> maskz_ ## _name(const Vector<S, n>& other, mask_t mask) const { \
+    return Vector<std::common_type_t<S, T>, n>{type::maskz_ ## _name(mask, base, other.base)}; \
+}
+
+#define VMATH_SIGNED_OPERATOR_HELPER(_symbol, _name) \
+    template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> operator _symbol(const Vector<S, n>& other) const { \
+    if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) { \
+        return Vector<std::common_type_t<S, T>, n>{type::_name(base, other.base)}; \
+    } \
+    else { \
+        return Vector<std::common_type_t<S, T>, n>{type::u ## _name(base, other.base)}; \
+    } \
+}
+
+#define VMATH_SIGNED_OPERATOR_MASK_HELPER(_name) \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> mask_ ## _name(const Vector<S, n>& other, mask_t mask, const Vector<S, n>& src) const { \
+    if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) { \
+        return Vector<std::common_type_t<S, T>, n>{type::mask_ ## _name(src.base, mask, base, other.base)}; \
+    } \
+    else { \
+        return Vector<std::common_type_t<S, T>, n>{type::mask_u ## _name(src.base, mask, base, other.base)}; \
+    } \
+} \
+ \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> mask_ ## _name(const Vector<S, n>& other, mask_t mask) const { \
+    return mask_ ## _name(other, mask, *this); \
+} \
+ \
+template<Compatible<T> S> \
+Vector<std::common_type_t<S, T>, n> maskz_ ## _name(const Vector<S, n>& other, mask_t mask) const { \
+    if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) { \
+        return Vector<std::common_type_t<S, T>, n>{type::maskz_ ## _name(mask, base, other.base)}; \
+    } \
+    else { \
+        return Vector<std::common_type_t<S, T>, n>{type::maskz_ ## _name(mask, base, other.base)}; \
+    } \
+}
+
 namespace detail {
 
 /*
@@ -69,6 +128,7 @@ struct Vector {
     using sT = detail::try_make_signed_t<T>;
     static constexpr size_t base_n = (8 * sizeof(T) * n < 128) ? 128 / (8 * sizeof(T)) : 256 / (8 * sizeof(T));
     using type = vtype<sT, base_n>;
+    using mask_t = std::uint32_t;
 
     vtype_t<sT, base_n> base;
 
@@ -98,25 +158,12 @@ struct Vector {
         return type::loadu(memory);
     }
 
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator+(const Vector<S, n>& other) const {
-        return Vector<std::common_type_t<S, T>, n>{type::add(base, other.base)};
-    }
-
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator-(const Vector<S, n>& other) const {
-        return Vector<std::common_type_t<S, T>, n>{type::sub(base, other.base)};
-    }
-
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator*(const Vector<S, n>& other) const {
-        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
-            return Vector<std::common_type_t<S, T>, n>{type::mul(base, other.base)};
-        }
-        else {
-            return Vector<std::common_type_t<S, T>, n>{type::umul(base, other.base)};
-        }
-    }
+    VMATH_BASIC_OPERATOR_HELPER(+, add)
+    VMATH_BASIC_OPERATOR_MASK_HELPER(add)
+    VMATH_BASIC_OPERATOR_HELPER(-, sub)
+    VMATH_BASIC_OPERATOR_MASK_HELPER(sub)
+    VMATH_SIGNED_OPERATOR_HELPER(*, mul)
+    VMATH_SIGNED_OPERATOR_MASK_HELPER(mul)
 
     Vector<T, n> operator*(const T& other) const {
         if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
@@ -127,30 +174,12 @@ struct Vector {
         }
     }
 
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator/(const Vector<S, n>& other) const {
-        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
-            return Vector<std::common_type_t<S, T>, n>{type::div(base, other.base)};
-        }
-        else {
-            return Vector<std::common_type_t<S, T>, n>{type::udiv(base, other.base)};
-        }
-    }
+    VMATH_BASIC_OPERATOR_HELPER(/, div)
+    VMATH_BASIC_OPERATOR_MASK_HELPER(div)
 
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator&(const Vector<S, n>& other) const {
-        return Vector<std::common_type_t<S, T>, n>{type::and_(base, other.base)};
-    }
-
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator|(const Vector<S, n>& other) const {
-        return Vector<std::common_type_t<S, T>, n>{type::or_(base, other.base)};
-    }
-
-    template<Compatible<T> S>
-    Vector<std::common_type_t<S, T>, n> operator^(const Vector<S, n>& other) const {
-        return Vector<std::common_type_t<S, T>, n>{type::xor_(base, other.base)};
-    }
+    VMATH_BASIC_OPERATOR_HELPER(&, and_)
+    VMATH_BASIC_OPERATOR_HELPER(|, or_)
+    VMATH_BASIC_OPERATOR_HELPER(^, xor_)
 
     template<typename S>
     Vector<T, n> operator<<(S other) const {
@@ -221,7 +250,44 @@ struct Vector {
     }
 
     Vector<T, n> abs() const { return Vector<T, n>{type::abs(base)}; }
-    Vector<T, n> sqrt() const { return Vector<T, n>{type::sqrt(base)}; }
+
+    Vector<T, n> sqrt() const {
+        return Vector<T, n>{type::sqrt(base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_sqrt(mask_t mask, const Vector<S, n>& src) const {
+        return Vector<T, n>{type::mask_sqrt(src.base, mask, base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_sqrt(mask_t mask) const {
+        return mask_sqrt(mask, *this);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> maskz_sqrt(mask_t mask) const {
+        return Vector<T, n>{type::maskz_sqrt(mask, base)};
+    }
+
+    Vector<T, n> rsqrt() const {
+        return Vector<T, n>{type::sqrt(base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_rsqrt(mask_t mask, const Vector<S, n>& src) const {
+        return Vector<T, n>{type::mask_sqrt(src.base, mask, base)};
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_rsqrt(mask_t mask) const {
+        return mask_sqrt(mask, *this);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> maskz_rsqrt(mask_t mask) const {
+        return Vector<T, n>{type::maskz_sqrt(mask, base)};
+    }
 
     template<Compatible<T> S>
     Vector<T, n> andnot(const Vector<S, n>& other) const {
@@ -230,8 +296,15 @@ struct Vector {
 
     template<Compatible<T> S>
     Vector<T, n> min(const Vector<S, n>& other) const {
-        return Vector<T, n>{type::min(base, other.base)};
+        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
+            return Vector<T, n>{type::min(base, other.base)};
+        }
+        else {
+            return Vector<T, n>{type::umin(base, other.base)};
+        }
     }
+
+    VMATH_SIGNED_OPERATOR_MASK_HELPER(min)
 
     Vector<T, n> min(T other) const {
         return min(Vector<T, n>{other});
@@ -239,8 +312,15 @@ struct Vector {
 
     template<Compatible<T> S>
     Vector<T, n> max(const Vector<S, n>& other) const {
-        return Vector<T, n>{type::max(base, other.base)};
+        if constexpr(!std::is_integral_v<T> || std::is_signed_v<T>) {
+            return Vector<T, n>{type::max(base, other.base)};
+        }
+        else {
+            return Vector<T, n>{type::umax(base, other.base)};
+        }
     }
+
+    VMATH_SIGNED_OPERATOR_MASK_HELPER(max)
 
     Vector<T, n> max(T other) const {
         return max(Vector<T, n>{other});
@@ -251,8 +331,36 @@ struct Vector {
         return min.max(this->min(Vector<T, n>{max}));
     }
 
+    template<Compatible<T> S>
+    Vector<T, n> mask_clamp(const Vector<S, n>& min, const Vector<S, n>& max, mask_t mask, const Vector<S, n>& src) const {
+        return min.mask_max(this->min(Vector<T, n>{max}), mask, src);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_clamp(const Vector<S, n>& min, const Vector<S, n>& max, mask_t mask) const {
+        return min.mask_max(this->min(Vector<T, n>{max}), mask, *this);
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> maskz_clamp(const Vector<S, n>& min, const Vector<S, n>& max, mask_t mask) const {
+        return min.maskz_max(this->min(Vector<T, n>{max}), mask);
+    }
+
     Vector<T, n> clamp(T min, T max) const {
         return clamp(Vector<T, n>{min}, Vector<T, n>{max});
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> mask_clamp(T min, T max, mask_t mask, const Vector<S, n>& src) const {
+        return mask_clamp(Vector<T, n>{min}, Vector<T, n>{max}, mask, src);
+    }
+
+    Vector<T, n> mask_clamp(T min, T max, mask_t mask) const {
+        return mask_clamp(Vector<T, n>{min}, Vector<T, n>{max}, mask);
+    }
+
+    Vector<T, n> maskz_clamp(T min, T max, mask_t mask) const {
+        return maskz_clamp(Vector<T, n>{min}, Vector<T, n>{max}, mask);
     }
 
     void store(T* dest) const {
@@ -306,5 +414,8 @@ template<typename T>
 using Vect256 = Vector<T, 256 / (8 * sizeof(T))>;
 
 #undef VMATH_IOP_HELPER
+#undef VMATH_BASIC_OPERATOR_HELPER
+#undef VMATH_SIGNED_OPERATOR_HELPER
+#undef VMATH_SIGNED_OPERATOR_MASK_HELPER
 
 }

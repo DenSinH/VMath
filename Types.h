@@ -29,25 +29,43 @@ struct vtype {
     static constexpr auto extract = _vmath_mm_extract_epi(_size, _type, _prefix); \
     static constexpr auto abs = _prefix ## _abs_epi ## _size; \
     static constexpr auto add = _prefix ## _add_epi ## _size; \
+    static constexpr auto mask_add = _prefix ## _mask_add_epi ## _size; \
+    static constexpr auto maskz_add = _prefix ## _maskz_add_epi ## _size; \
     static constexpr auto mul = _prefix ## _mullo_epi ## _size; \
+    static constexpr auto mask_mul = _prefix ## _mask_mullo_epi ## _size; \
+    static constexpr auto maskz_mul = _prefix ## _maskz_mullo_epi ## _size; \
     static constexpr auto umul = _prefix ## _mul_epu ## _size; \
+    static constexpr auto mask_umul = _prefix ## _mask_mul_epu ## _size; \
+    static constexpr auto maskz_umul = _prefix ## _maskz_mul_epu ## _size; \
     static constexpr auto div = nullptr; \
-    static constexpr auto udiv = nullptr; \
+    static constexpr auto mask_div = nullptr; \
+    static constexpr auto maskz_div = nullptr; \
     static constexpr auto and_ = _prefix ## _and_si ## _type_bits; \
     static constexpr auto andnot = _prefix ## _andnot_si ## _type_bits; \
     static constexpr auto xor_ = _prefix ## _xor_si ## _type_bits; \
     static constexpr auto or_ = _prefix ## _or_si ## _type_bits; \
     static constexpr auto sub = _prefix ## _sub_epi ## _size; \
+    static constexpr auto mask_sub = _prefix ## _mask_sub_epi ## _size; \
+    static constexpr auto maskz_sub = _prefix ## _maskz_sub_epi ## _size; \
     static constexpr auto shli = _prefix ## _slli_epi ## _size; \
     static constexpr auto shrai = _prefix ## _srai_epi ## _size; \
     static constexpr auto shrli = _prefix ## _srli_epi ## _size; \
     static constexpr auto shlv = _prefix ## _sllv_epi ## _size; \
     static constexpr auto shrav = _prefix ## _srav_epi ## _size; \
     static constexpr auto shrlv = _prefix ## _srlv_epi ## _size; \
-    static constexpr auto cmpeq = _prefix ## _cmpeq_epi ## _size;                              \
-    static constexpr auto cmpgt = _prefix ## _cmpgt_epi ## _size;                            \
-    static constexpr auto min = _prefix ## _min_epi ## _size;                            \
-    static constexpr auto max = _prefix ## _max_epi ## _size;                            \
+    static constexpr auto cmpeq = _prefix ## _cmpeq_epi ## _size; \
+    static constexpr auto cmpgt = _prefix ## _cmpgt_epi ## _size; \
+    static constexpr auto min = _prefix ## _min_epi ## _size; \
+    static constexpr auto mask_min = _prefix ## _mask_min_epi ## _size; \
+    static constexpr auto maskz_min = _prefix ## _maskz_min_epi ## _size; \
+    static constexpr auto mask_umin = _prefix ## _mask_min_epu ## _size; \
+    static constexpr auto maskz_umin = _prefix ## _maskz_min_epu ## _size; \
+    static constexpr auto max = _prefix ## _max_epi ## _size; \
+    static constexpr auto mask_max = _prefix ## _mask_max_epi ## _size; \
+    static constexpr auto maskz_max = _prefix ## _maskz_max_epi ## _size; \
+    static constexpr auto umax = _prefix ## _max_epu ## _size; \
+    static constexpr auto mask_umax = _prefix ## _mask_max_epu ## _size; \
+    static constexpr auto maskz_umax = _prefix ## _maskz_max_epu ## _size; \
 }
 
 #define VMATH_FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
@@ -65,14 +83,31 @@ struct vtype {
         return _prefix ## _and_ ## _postfix(mask, v); \
     }; \
     static constexpr auto add = _prefix ## _add_ ## _postfix; \
+    static constexpr auto mask_add = _prefix ## _mask_add_ ## _postfix; \
+    static constexpr auto maskz_add = _prefix ## _maskz_add_ ## _postfix; \
     static constexpr auto mul = _prefix ## _mul_ ## _postfix; \
+    static constexpr auto mask_mul = _prefix ## _mask_mul_ ## _postfix; \
+    static constexpr auto maskz_mul = _prefix ## _maskz_mul_ ## _postfix; \
     static constexpr auto div = _prefix ## _div_ ## _postfix; \
+    static constexpr auto mask_div = _prefix ## _mask_div_ ## _postfix; \
+    static constexpr auto maskz_div = _prefix ## _maskz_div_ ## _postfix; \
     static constexpr auto sub = _prefix ## _sub_ ## _postfix; \
-    static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix;                              \
-    static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix;                            \
-    static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix;                            \
-    static constexpr auto min = _prefix ## _min_ ## _postfix;                            \
-    static constexpr auto max = _prefix ## _max_ ## _postfix;                            \
+    static constexpr auto mask_sub = _prefix ## _mask_sub_ ## _postfix; \
+    static constexpr auto maskz_sub = _prefix ## _maskz_sub_ ## _postfix; \
+    static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix; \
+    static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix; \
+    static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix; \
+    static constexpr auto mask_sqrt = _prefix ## _mask_sqrt_ ## _postfix; \
+    static constexpr auto maskz_sqrt = _prefix ## _maskz_sqrt_ ## _postfix; \
+    static constexpr auto rsqrt = _prefix ## _rsqrt14_ ## _postfix; \
+    static constexpr auto mask_rsqrt = _prefix ## _mask_rsqrt14_ ## _postfix; \
+    static constexpr auto maskz_rsqrt = _prefix ## _maskz_rsqrt14_ ## _postfix; \
+    static constexpr auto min = _prefix ## _min_ ## _postfix; \
+    static constexpr auto mask_min = _prefix ## _mask_min_ ## _postfix; \
+    static constexpr auto maskz_min = _prefix ## _maskz_min_ ## _postfix; \
+    static constexpr auto max = _prefix ## _max_ ## _postfix; \
+    static constexpr auto mask_max = _prefix ## _mask_max_ ## _postfix; \
+    static constexpr auto maskz_max = _prefix ## _maskz_max_ ## _postfix; \
 }
 
 #define VMATH_TYPEM128I_HELPER(_size) VMATH_INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)
@@ -85,9 +120,17 @@ struct vtype {
 #define _mm_srav_epi8 nullptr
 #define _mm_srlv_epi8 nullptr
 #define _mm_mullo_epi8 nullptr
+#define _mm_mask_mullo_epi8 nullptr
+#define _mm_maskz_mullo_epi8 nullptr
 #define _mm_mul_epu8 nullptr
+#define _mm_mask_mul_epu8 nullptr
+#define _mm_maskz_mul_epu8 nullptr
 #define _mm_mul_epu16 nullptr
+#define _mm_mask_mul_epu16 nullptr
+#define _mm_maskz_mul_epu16 nullptr
 #define _mm_mul_epu64 nullptr
+#define _mm_mask_mul_epu64 nullptr
+#define _mm_maskz_mul_epu64 nullptr
 
 
 VMATH_TYPEM128I_HELPER(8);
@@ -102,9 +145,17 @@ VMATH_TYPEM128I_HELPER(64);
 #define _mm256_srav_epi8 nullptr
 #define _mm256_srlv_epi8 nullptr
 #define _mm256_mullo_epi8 nullptr
+#define _mm256_mask_mullo_epi8 nullptr
+#define _mm256_maskz_mullo_epi8 nullptr
 #define _mm256_mul_epu8 nullptr
+#define _mm256_mask_mul_epu8 nullptr
+#define _mm256_maskz_mul_epu8 nullptr
 #define _mm256_mul_epu16 nullptr
+#define _mm256_mask_mul_epu16 nullptr
+#define _mm256_maskz_mul_epu16 nullptr
 #define _mm256_mul_epu64 nullptr
+#define _mm256_mask_mul_epu64 nullptr
+#define _mm256_maskz_mul_epu64 nullptr
 #define _mm256_setr_epi64 _mm256_setr_epi64x
 #define _mm256_set1_epi64 _mm256_set1_epi64x
 
