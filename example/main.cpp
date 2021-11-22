@@ -36,10 +36,14 @@ int main() {
     };
 
     mat *= mat * 3;
+    mat += mat;
 
     std::printf("mat\n%f\n", mat.get<0, 0>());
     std::printf("%f\n", mat.get<1, 0>());
     std::printf("%f\n", mat.get<2, 0>());
+
+    e1 = mat * e1;
+    std::printf("%f %f %f\n", e1.get<0>(), e1.get<1>(), e1.get<2>());
 
     return 0;
 }
