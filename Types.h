@@ -26,6 +26,8 @@ struct vtype {
     static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_si ## _type_bits; \
     static constexpr auto storeu = _prefix ## _storeu_epi ## _size; \
+    static constexpr auto permutex2var = _prefix ## _permutex2var_epi ## _size; \
+    static constexpr auto permutexvar = _vmath ## _prefix ## _permutexvar_epi ## _size; \
     static constexpr auto extract = _vmath_mm_extract_epi(_size, _type, _prefix); \
     static constexpr auto abs = _prefix ## _abs_epi ## _size; \
     static constexpr auto add = _prefix ## _add_epi ## _size; \
@@ -76,6 +78,8 @@ struct vtype {
     static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_ ## _postfix; \
     static constexpr auto storeu = _prefix ## _storeu_ ## _postfix; \
+    static constexpr auto permutex2var = _prefix ## _permutex2var_ ## _postfix; \
+    static constexpr auto permutexvar = _vmath ## _prefix ## _permutexvar_ ## _postfix; \
     static constexpr auto extract = _vmath_mm_extract_epi(_base_bits, __m ## _type_bits ## i, _prefix); \
     static constexpr auto abs = [](type& v) { \
         __m ## _type_bits ## i minus1 = _prefix ## _set1_epi32(-1); \
@@ -131,6 +135,10 @@ struct vtype {
 #define _mm_mul_epu64 nullptr
 #define _mm_mask_mul_epu64 nullptr
 #define _mm_maskz_mul_epu64 nullptr
+#define _vmath_mm_permutexvar_epi8 [](auto idx, auto a) { return _mm_permutex2var_epi8(a, idx, a); }
+#define _vmath_mm_permutexvar_epi16 [](auto idx, auto a) { return _mm_permutex2var_epi16(a, idx, a); }
+#define _vmath_mm_permutexvar_epi32 [](auto idx, auto a) { return _mm_permutex2var_epi32(a, idx, a); }
+#define _vmath_mm_permutexvar_epi64 [](auto idx, auto a) { return _mm_permutex2var_epi64(a, idx, a); }
 
 
 VMATH_TYPEM128I_HELPER(8);
@@ -158,6 +166,10 @@ VMATH_TYPEM128I_HELPER(64);
 #define _mm256_maskz_mul_epu64 nullptr
 #define _mm256_setr_epi64 _mm256_setr_epi64x
 #define _mm256_set1_epi64 _mm256_set1_epi64x
+#define _vmath_mm256_permutexvar_epi8 _mm256_permutexvar_epi8
+#define _vmath_mm256_permutexvar_epi16 _mm256_permutexvar_epi16
+#define _vmath_mm256_permutexvar_epi32 [](auto idx, auto a) { return _mm256_permutexvar_epi32(idx, a); }
+#define _vmath_mm256_permutexvar_epi64 _mm256_permutexvar_epi64
 
 VMATH_TYPEM256I_HELPER(8);
 VMATH_TYPEM256I_HELPER(16);
@@ -169,6 +181,10 @@ VMATH_TYPEM256I_HELPER(64);
 #define _mm256_cmpeq_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_EQ_OS); }
 #define _mm256_cmpgt_ps [](__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OS); }
 #define _mm256_cmpgt_pd [](__m256d a, __m256d b) { return _mm256_cmp_pd(a, b, _CMP_GT_OS); }
+#define _vmath_mm_permutexvar_ps [](auto idx, auto a) { return _mm_permutexvar_ps(a, idx); }
+#define _vmath_mm_permutexvar_pd [](auto idx, auto a) { return _mm_permutexvar_pd(a, idx); }
+#define _vmath_mm256_permutexvar_ps [](auto idx, auto a) { return _mm256_permutexvar_ps(a, idx); }
+#define _vmath_mm256_permutexvar_pd [](auto idx, auto a) { return _mm256_permutexvar_pd(a, idx); }
 
 VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);
 VMATH_FP_TYPE_HELPER(double, 64, __m128d, 128, _mm, pd);

@@ -119,6 +119,27 @@ struct func<R (*const) (First, Args...)> {
     using first_t = First;
 };
 
+/*
+ * For getting equal sized, integer argument types
+ * */
+template<typename T>
+struct integral_size {
+    using type = try_make_signed_t<T>;
+};
+
+template<>
+struct integral_size<float> {
+    using type = std::uint32_t;
+};
+
+template<>
+struct integral_size<double> {
+    using type = std::uint64_t;
+};
+
+template<typename T>
+using integral_size_t = typename integral_size<T>::type;
+
 }
 
 template<typename T, size_t n>
@@ -150,12 +171,52 @@ struct Vector {
 
     }
 
+    template<int imm8>
+    requires (0 <= imm8) && (imm8 < n)
+    T get() const {
+        return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
+    }
+
     static Vector<T, n> load(const T* memory) {
         return type::load(reinterpret_cast<typename detail::func<decltype(type::load)>::first_t>(memory));
     }
 
     static Vector<T, n> loadu(const T* memory) {
         return type::loadu(memory);
+    }
+
+    void store(T* dest) const {
+        if constexpr(std::is_integral_v<T>) {
+            type::store(reinterpret_cast<vmath::vtype_t<sT, n>*>(dest), base);
+        }
+        else {
+            type::store(dest, base);
+        }
+    }
+
+    void storeu(T* dest) const {
+        type::storeu(dest, base);
+    }
+
+    std::array<T, base_n> data() const {
+        alignas(sizeof(T) * base_n) std::array<T, base_n> data;
+        store(data.data());
+        return data;
+    }
+
+    std::array<T, base_n> datau() const {
+        std::array<T, base_n> data;
+        store(data.data());
+        return data;
+    }
+
+    template<Compatible<T> S>
+    Vector<T, n> permutex2var(Vector<detail::integral_size_t<T>, n> permutation, Vector<S, n> other) const {
+        return Vector<T, n>{type::permutex2var(base, permutation.base, other.base)};
+    }
+
+    Vector<T, n> permutexvar(Vector<detail::integral_size_t<T>, n> permutation) const {
+        return Vector<T, n>{type::permutexvar(permutation.base, base)};
     }
 
     VMATH_BASIC_OPERATOR_HELPER(+, add)
@@ -361,35 +422,6 @@ struct Vector {
 
     Vector<T, n> maskz_clamp(T min, T max, mask_t mask) const {
         return maskz_clamp(Vector<T, n>{min}, Vector<T, n>{max}, mask);
-    }
-
-    void store(T* dest) const {
-        if constexpr(std::is_integral_v<T>) {
-            type::store(reinterpret_cast<vmath::vtype_t<sT, n>*>(dest), base);
-        }
-        else {
-            type::store(dest, base);
-        }
-    }
-
-    void storeu(T* dest) const { type::storeu(dest, base); }
-
-    std::array<T, base_n> data() const {
-        alignas(sizeof(T) * base_n) std::array<T, base_n> data;
-        store(data.data());
-        return data;
-    }
-
-    std::array<T, base_n> datau() const {
-        std::array<T, base_n> data;
-        store(data.data());
-        return data;
-    }
-
-    template<int imm8>
-    requires (0 <= imm8) && (imm8 < n)
-    T get() const {
-        return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
     }
 
     VMATH_IOP_HELPER(+)

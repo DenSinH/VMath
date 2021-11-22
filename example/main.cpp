@@ -25,6 +25,10 @@ int main() {
     e1 += -e2 * e1;
     std::printf("%f\n", e1.get<0>());
 
+    // only supported on AVX-512
+//    e2 = e2.permutexvar({0, 1, 2});
+//    std::printf("permuted: %f %f %f\n", e2.get<0>(), e2.get<1>(), e2.get<2>());
+
     vmath::Matrix<double, 3, 3> mat{
             {1, 0, 0},
             {1, 1, 0},
