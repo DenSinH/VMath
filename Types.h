@@ -20,8 +20,10 @@ struct vtype {
 
 #define VMATH_INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
     using type = _type; \
-    static constexpr auto load = _prefix ## _setr_epi ## _size; \
-    static constexpr auto load1 = _prefix ## _set1_epi ## _size; \
+    static constexpr auto set = _prefix ## _setr_epi ## _size; \
+    static constexpr auto set1 = _prefix ## _set1_epi ## _size; \
+    static constexpr auto load = _prefix ## _load_si ## _type_bits; \
+    static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_si ## _type_bits; \
     static constexpr auto storeu = _prefix ## _storeu_epi ## _size; \
     static constexpr auto extract = _vmath_mm_extract_epi(_size, _type, _prefix); \
@@ -50,8 +52,10 @@ struct vtype {
 
 #define VMATH_FP_TYPE_HELPER(_base_type, _base_bits, _type, _type_bits, _prefix, _postfix) template<> struct vtype<_base_type, _type_bits / (8 * sizeof(_base_type))> { \
     using type = _type; \
-    static constexpr auto load = _prefix ## _setr_ ## _postfix; \
-    static constexpr auto load1 = _prefix ## _set1_ ## _postfix; \
+    static constexpr auto set = _prefix ## _setr_ ## _postfix; \
+    static constexpr auto set1 = _prefix ## _set1_ ## _postfix; \
+    static constexpr auto load = _prefix ## _load_si ## _type_bits; \
+    static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_ ## _postfix; \
     static constexpr auto storeu = _prefix ## _storeu_ ## _postfix; \
     static constexpr auto extract = _vmath_mm_extract_epi(_base_bits, __m ## _type_bits ## i, _prefix); \

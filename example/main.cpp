@@ -1,6 +1,7 @@
 #include <cstdio>
 #include "../Types.h"
 #include "../Vector.h"
+#include "../Matrix.h"
 
 
 int main() {
@@ -22,6 +23,17 @@ int main() {
     vmath::Vector<double, 3> e1{1, 2, 3};
     vmath::Vector<double, 3> e2{5, 6, 7};
     e1 += -e2 * e1;
-    std::printf("%f\n", y1.get<0>());
+    std::printf("%f\n", e1.get<0>());
+
+    vmath::Matrix<double, 3, 3> mat{
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 0, 1}
+    };
+
+    mat *= mat * 3;
+
+    std::printf("%f\n", mat.get<0, 1>());
+
     return 0;
 }

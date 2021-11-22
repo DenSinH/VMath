@@ -3,6 +3,7 @@
 #include "Types.h"
 
 #include <array>
+#include <bit>
 #include <tuple>
 
 
@@ -28,11 +29,7 @@ struct identity { using type = T; };
 
 template<typename T>
 using try_make_signed =
-typename std::conditional<
-        std::is_integral<T>::value,
-        std::make_signed<T>,
-        identity<T>
->::type;
+typename std::conditional< std::is_integral<T>::value, std::make_signed<T>, identity<T>>::type;
 
 template<typename T>
 using try_make_signed_t = typename try_make_signed<T>::type;
@@ -53,32 +50,52 @@ auto fill_tuple(Args... args) {
     return detail::fill_tuple_impl<T>(std::make_index_sequence<n>{}, std::make_index_sequence<n - sizeof...(Args)>{}, args...);
 }
 
+/*
+ * For getting function argument types.
+ * */
+template<typename T> struct func { };
+template<typename R, typename First, typename... Args>
+struct func<R (*const) (First, Args...)> {
+    using return_t = R;
+    using first_t = First;
+};
+
 }
 
 template<typename T, size_t n>
 struct Vector {
-private:
-    // removing this static assert and instantiating a Vector<double, 8> blows up clang
     static_assert(n * sizeof(T) * 8 <= 256);
-    using signed_T = detail::try_make_signed_t<T>;
+
+    using sT = detail::try_make_signed_t<T>;
     static constexpr size_t base_n = (8 * sizeof(T) * n < 128) ? 128 / (8 * sizeof(T)) : 256 / (8 * sizeof(T));
-    using type = vtype<signed_T, base_n>;
+    using type = vtype<sT, base_n>;
 
-    vtype_t<signed_T, base_n> base;
+    vtype_t<sT, base_n> base;
 
-public:
     template<typename... Args>
     requires (sizeof...(Args) == n)
-    Vector(Args... args) : base(std::apply(type::load, detail::fill_tuple<signed_T, base_n>((signed_T)args...))) {
+    Vector(Args... args) : base(std::apply(type::set, detail::fill_tuple<sT, base_n>((sT)args...))) {
 
     }
 
-    Vector(T value) : base(type::load1(value)) {
+    Vector(T value) : base(type::set1(value)) {
 
     }
 
-    Vector(const vtype_t<signed_T, base_n>& other) : base(other) {
+    Vector() : Vector(0) {
 
+    }
+
+    Vector(const vtype_t<sT, base_n>& other) : base(other) {
+
+    }
+
+    static Vector<T, n> load(const T* memory) {
+        return type::load(reinterpret_cast<typename detail::func<decltype(type::load)>::first_t>(memory));
+    }
+
+    static Vector<T, n> loadu(const T* memory) {
+        return type::loadu(memory);
     }
 
     template<Compatible<T> S>
@@ -240,7 +257,7 @@ public:
 
     void store(T* dest) const {
         if constexpr(std::is_integral_v<T>) {
-            type::store(reinterpret_cast<vmath::vtype_t<signed_T, n>*>(dest), base);
+            type::store(reinterpret_cast<vmath::vtype_t<sT, n>*>(dest), base);
         }
         else {
             type::store(dest, base);
@@ -249,15 +266,14 @@ public:
 
     void storeu(T* dest) const { type::storeu(dest, base); }
 
-    std::array<T, n> data() const {
-        constexpr size_t alignment = sizeof(T) * base_n;
-        alignas(alignment) std::array<T, n> data;
+    std::array<T, base_n> data() const {
+        alignas(sizeof(T) * base_n) std::array<T, base_n> data;
         store(data.data());
         return data;
     }
 
-    std::array<T, n> datau() const {
-        std::array<T, n> data;
+    std::array<T, base_n> datau() const {
+        std::array<T, base_n> data;
         store(data.data());
         return data;
     }
