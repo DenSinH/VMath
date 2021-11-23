@@ -226,7 +226,10 @@ struct Vector {
 
     template<typename To, typename return_t = Vector<To, std::min(n, 256 / (8 * sizeof(To)))>>
     return_t convert() const {
-        if constexpr((8 * sizeof(T) * base_n == 128) && (8 * sizeof(To) * n < 128)) {
+        if constexpr(std::is_same_v<detail::try_make_signed_t<T>, detail::try_make_signed_t<To>>) {
+            return return_t{base};
+        }
+        else if constexpr((8 * sizeof(T) * base_n == 128) && (8 * sizeof(To) * n < 128)) {
             return return_t{vcast<T, detail::try_make_signed_t<To>>::cast128(base)};
         }
         else {
