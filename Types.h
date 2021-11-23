@@ -211,7 +211,7 @@ struct vcast {
 }
 
 
-#define VMATH_CHAIN_CAST(_From, _Inter, _To, _size) [](auto v) { return vcast<_Inter, _To>::cast128(vcast<_From, _Inter>::cast ## _size(v)); }
+#define VMATH_CHAIN_CAST(_From, _Inter, _To, _size) [](auto v) { return vcast<_Inter, _To>::cast ## _size(vcast<_From, _Inter>::cast ## _size(v)); }
 
 #define _mm_cvtepi8_ps VMATH_CHAIN_CAST(std::int8_t, std::int32_t, float, 128)
 #define _mm256_cvtepi8_ps VMATH_CHAIN_CAST(std::int8_t, std::int32_t, float, 256)
