@@ -163,7 +163,7 @@ struct Vector {
 
     }
 
-    Vector() : Vector(0) {
+    Vector() : base(type::setzero()) {
 
     }
 
@@ -174,7 +174,12 @@ struct Vector {
     template<int imm8>
     requires (0 <= imm8) && (imm8 < n)
     T get() const {
-        return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
+        if constexpr(std::is_floating_point_v<T>) {
+            return std::bit_cast<T>(type::extract.template operator()<imm8>(base));
+        }
+        else {
+            return (T)type::extract.template operator()<imm8>(base);
+        }
     }
 
     static Vector<T, n> load(const T* memory) {
@@ -217,6 +222,21 @@ struct Vector {
 
     Vector<T, n> permutexvar(Vector<detail::integral_size_t<T>, n> permutation) const {
         return Vector<T, n>{type::permutexvar(permutation.base, base)};
+    }
+
+    template<typename To, typename return_t = Vector<To, std::min(n, 256 / (8 * sizeof(To)))>>
+    return_t convert() const {
+        if constexpr((8 * sizeof(T) * base_n == 128) && (8 * sizeof(To) * n < 128)) {
+            return return_t{vcast<T, detail::try_make_signed_t<To>>::cast128(base)};
+        }
+        else {
+            return return_t{vcast<T, detail::try_make_signed_t<To>>::cast256(base)};
+        }
+    }
+
+    template<typename To, typename return_t = Vector<To, (n * sizeof(T)) / sizeof(To)>>
+    return_t reinterpret() const {
+        return return_t{base};
     }
 
     VMATH_BASIC_OPERATOR_HELPER(+, add)

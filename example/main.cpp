@@ -43,7 +43,18 @@ int main() {
     std::printf("%f\n", mat.get<2, 0>());
 
     e1 = mat * e1;
+
+
     std::printf("%f %f %f\n", e1.get<0>(), e1.get<1>(), e1.get<2>());
+    auto f1 = e1.convert<int32_t>().convert<double>();
+    std::printf("%f %f %f\n", f1.get<0>(), f1.get<1>(), f1.get<2>());
+    auto f2 = e1.convert<float>().convert<uint8_t>();
+    std::printf("%d %d %d\n", f2.get<0>(), f2.get<1>(), f2.get<2>());
+    std::printf("%d %d %d\n", (uint8_t)(-24), (uint8_t)(-108), (uint8_t)(-300));
+
+    vmath::Vector<uint8_t, 8> uiv = {1, 2, 3, 4, 5, 6, 7, 8};
+    auto uiv32 = uiv.reinterpret<uint32_t>();
+    std::printf("%08x %08x\n", uiv32.get<0>(), uiv32.get<1>());
 
     return 0;
 }

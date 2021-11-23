@@ -22,6 +22,7 @@ struct vtype {
     using type = _type; \
     static constexpr auto set = _prefix ## _setr_epi ## _size; \
     static constexpr auto set1 = _prefix ## _set1_epi ## _size; \
+    static constexpr auto setzero = _prefix ## _setzero_si ## _type_bits; \
     static constexpr auto load = _prefix ## _load_si ## _type_bits; \
     static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_si ## _type_bits; \
@@ -74,6 +75,7 @@ struct vtype {
     using type = _type; \
     static constexpr auto set = _prefix ## _setr_ ## _postfix; \
     static constexpr auto set1 = _prefix ## _set1_ ## _postfix; \
+    static constexpr auto setzero = _prefix ## _setzero_ ## _postfix; \
     static constexpr auto load = _prefix ## _load_si ## _type_bits; \
     static constexpr auto loadu = _prefix ## _loadu_si ## _type_bits; \
     static constexpr auto store = _prefix ## _store_ ## _postfix; \
@@ -198,9 +200,108 @@ VMATH_FP_TYPE_HELPER(double, 64, __m256d, 256, _mm256, pd);
 template<typename T, size_t n>
 using vtype_t = typename vtype<T, n>::type;
 
+template<typename From, typename To>
+struct vcast {
+
+};
+
+#define VMATH_CAST_HELPER(_From, _To, _ffix, _tfix) template<> struct vcast<_From, _To> { \
+    static constexpr auto cast128 = _mm_cvt ## _ffix ## _ ## _tfix; \
+    static constexpr auto cast256 = _mm256_cvt ## _ffix ## _ ## _tfix; \
 }
+
+
+#define VMATH_CHAIN_CAST(_From, _Inter, _To, _size) [](auto v) { return vcast<_Inter, _To>::cast128(vcast<_From, _Inter>::cast ## _size(v)); }
+
+#define _mm_cvtepi8_ps VMATH_CHAIN_CAST(std::int8_t, std::int32_t, float, 128)
+#define _mm256_cvtepi8_ps VMATH_CHAIN_CAST(std::int8_t, std::int32_t, float, 256)
+#define _mm_cvtepu8_ps VMATH_CHAIN_CAST(std::uint8_t, std::int32_t, float, 128)
+#define _mm256_cvtepu8_ps VMATH_CHAIN_CAST(std::uint8_t, std::int32_t, float, 256)
+#define _mm_cvtepi16_ps VMATH_CHAIN_CAST(std::int16_t, std::int32_t, float, 128)
+#define _mm256_cvtepi16_ps VMATH_CHAIN_CAST(std::int16_t, std::int32_t, float, 256)
+#define _mm_cvtepu16_ps VMATH_CHAIN_CAST(std::uint16_t, std::int32_t, float, 128)
+#define _mm256_cvtepu16_ps VMATH_CHAIN_CAST(std::uint16_t, std::int32_t, float, 256)
+
+#define _mm_cvtps_epi8 VMATH_CHAIN_CAST(float, std::int32_t, std::int8_t, 128)
+#define _mm256_cvtps_epi8 VMATH_CHAIN_CAST(float, std::int32_t, std::int8_t, 256)
+#define _mm_cvtps_epi16 VMATH_CHAIN_CAST(float, std::int32_t, std::int16_t, 128)
+#define _mm256_cvtps_epi16 VMATH_CHAIN_CAST(float, std::int32_t, std::int16_t, 256)
+#define _mm_cvtpd_epi8 VMATH_CHAIN_CAST(double, std::int32_t, std::int8_t, 128)
+#define _mm256_cvtpd_epi8 VMATH_CHAIN_CAST(double, std::int32_t, std::int8_t, 256)
+#define _mm_cvtpd_epi16 VMATH_CHAIN_CAST(double, std::int32_t, std::int16_t, 128)
+#define _mm256_cvtpd_epi16 VMATH_CHAIN_CAST(double, std::int32_t, std::int16_t, 256)
+
+#define _mm_cvtepi8_pd VMATH_CHAIN_CAST(std::int8_t, std::int32_t, double, 128)
+#define _mm256_cvtepi8_pd VMATH_CHAIN_CAST(std::int8_t, std::int32_t, double, 256)
+#define _mm_cvtepu8_pd VMATH_CHAIN_CAST(std::uint8_t, std::int32_t, double, 128)
+#define _mm256_cvtepu8_pd VMATH_CHAIN_CAST(std::uint8_t, std::int32_t, double, 256)
+#define _mm_cvtepi16_pd VMATH_CHAIN_CAST(std::int16_t, std::int32_t, double, 128)
+#define _mm256_cvtepi16_pd VMATH_CHAIN_CAST(std::int16_t, std::int32_t, double, 256)
+#define _mm_cvtepu16_pd VMATH_CHAIN_CAST(std::uint16_t, std::int32_t, double, 128)
+#define _mm256_cvtepu16_pd VMATH_CHAIN_CAST(std::uint16_t, std::int32_t, double, 256)
+
+// first do int32_t to use as intermediate for chain casts
+VMATH_CAST_HELPER(std::int32_t, std::int8_t, epi32, epi8);
+VMATH_CAST_HELPER(std::int32_t, std::int16_t, epi32, epi16);
+VMATH_CAST_HELPER(std::int32_t, std::int64_t, epi32, epi64);
+VMATH_CAST_HELPER(std::int32_t, float, epi32, ps);
+VMATH_CAST_HELPER(std::int32_t, double, epi32, pd);
+VMATH_CAST_HELPER(std::uint32_t, std::int8_t, epi32, epi8);    // chop off bits, sign does not matter
+VMATH_CAST_HELPER(std::uint32_t, std::int16_t, epi32, epi16);  // chop off bits, sign does not matter
+VMATH_CAST_HELPER(std::uint32_t, std::int64_t, epu32, epi64);
+//VMATH_CAST_HELPER(std::uint32_t, float, epu32, ps);   // requires AVX512
+//VMATH_CAST_HELPER(std::uint32_t, double, epu32, pd);  // requires AVX512
+
+VMATH_CAST_HELPER(std::int8_t, std::int16_t, epi8, epi16);
+VMATH_CAST_HELPER(std::int8_t, std::int32_t, epi8, epi32);
+VMATH_CAST_HELPER(std::int8_t, std::int64_t, epi8, epi64);
+VMATH_CAST_HELPER(std::int8_t, float, epi8, ps);
+VMATH_CAST_HELPER(std::int8_t, double, epi8, pd);
+VMATH_CAST_HELPER(std::uint8_t, std::int16_t, epu8, epi16);
+VMATH_CAST_HELPER(std::uint8_t, std::int32_t, epu8, epi32);
+VMATH_CAST_HELPER(std::uint8_t, std::int64_t, epu8, epi64);
+VMATH_CAST_HELPER(std::uint8_t, float, epu8, ps);
+VMATH_CAST_HELPER(std::uint8_t, double, epu8, pd);
+
+VMATH_CAST_HELPER(std::int16_t, std::int8_t, epi16, epi8);
+VMATH_CAST_HELPER(std::int16_t, std::int32_t, epi16, epi32);
+VMATH_CAST_HELPER(std::int16_t, std::int64_t, epi16, epi64);
+VMATH_CAST_HELPER(std::int16_t, float, epi16, ps);
+VMATH_CAST_HELPER(std::int16_t, double, epi16, pd);
+VMATH_CAST_HELPER(std::uint16_t, std::int8_t, epi16, epi8);  // chop off bits, sign does not matter
+VMATH_CAST_HELPER(std::uint16_t, std::int32_t, epu16, epi32);
+VMATH_CAST_HELPER(std::uint16_t, std::int64_t, epu16, epi64);
+VMATH_CAST_HELPER(std::uint16_t, float, epu16, ps);
+VMATH_CAST_HELPER(std::uint16_t, double, epu16, pd);
+
+VMATH_CAST_HELPER(std::int64_t, std::int8_t, epi64, epi8);
+VMATH_CAST_HELPER(std::int64_t, std::int16_t, epi64, epi16);
+VMATH_CAST_HELPER(std::int64_t, std::int32_t, epi64, epi32);
+//VMATH_CAST_HELPER(std::int64_t, float, epi64, ps);   // require AVX512
+//VMATH_CAST_HELPER(std::int64_t, double, epi64, pd);  // require AVX512
+VMATH_CAST_HELPER(std::uint64_t, std::int8_t, epi64, epi8);    // chop off bits, sign does not matter
+VMATH_CAST_HELPER(std::uint64_t, std::int16_t, epi64, epi16);  // chop off bits, sign does not matter
+VMATH_CAST_HELPER(std::uint64_t, std::int32_t, epi64, epi32);  // chop off bits, sign does not matter
+//VMATH_CAST_HELPER(std::uint64_t, float, epu64, ps);   // require AVX512
+//VMATH_CAST_HELPER(std::uint64_t, double, epu64, pd);  // require AVX512
+
+VMATH_CAST_HELPER(float, std::int32_t, ps, epi32);
+VMATH_CAST_HELPER(float, std::int8_t, ps, epi8);
+VMATH_CAST_HELPER(float, std::int16_t, ps, epi16);
+//VMATH_CAST_HELPER(float, std::int64_t, ps, epi64);  // requires AVX512
+VMATH_CAST_HELPER(float, double, ps, pd);
+
+VMATH_CAST_HELPER(double, std::int32_t, pd, epi32);
+VMATH_CAST_HELPER(double, std::int8_t, pd, epi8);
+VMATH_CAST_HELPER(double, std::int16_t, pd, epi16);
+//VMATH_CAST_HELPER(double, std::int64_t, pd, epi64);  // requires AVX512
+VMATH_CAST_HELPER(double, float, pd, ps);
+
+};
 
 #undef VMATH_FP_TYPE_HELPER
 #undef VMATH_INTEGRAL_TYPE_HELPER
 #undef VMATH_TYPEM128I_HELPER
 #undef VMATH_TYPEM256I_HELPER
+#undef VMATH_CAST_HELPER
+#undef VMATH_CHAIN_CAST
