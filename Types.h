@@ -16,7 +16,7 @@ struct vtype {
 
 };
 
-#define _vmath_mm_extract_epi(_size, _type, _prefix) []<int imm8>(_type vec) { return _prefix ## _extract_epi ## _size (vec, imm8); }
+#define _vmath_mm_extract_epi(_size, _type, _prefix) []<int imm8>(const _type& vec) { return _prefix ## _extract_epi ## _size (vec, imm8); }
 
 #define VMATH_INTEGRAL_TYPE_HELPER(_size, _type, _type_bits, _prefix) template<> struct vtype<std::int ## _size ## _t, _type_bits / _size> { \
     using type = _type; \
@@ -58,6 +58,7 @@ struct vtype {
     static constexpr auto shrlv = _prefix ## _srlv_epi ## _size; \
     static constexpr auto cmpeq = _prefix ## _cmpeq_epi ## _size; \
     static constexpr auto cmpgt = _prefix ## _cmpgt_epi ## _size; \
+    static constexpr auto testz = _prefix ## _testz_si ## _type_bits; \
     static constexpr auto min = _prefix ## _min_epi ## _size; \
     static constexpr auto mask_min = _prefix ## _mask_min_epi ## _size; \
     static constexpr auto maskz_min = _prefix ## _maskz_min_epi ## _size; \
@@ -83,7 +84,7 @@ struct vtype {
     static constexpr auto permutex2var = _prefix ## _permutex2var_ ## _postfix; \
     static constexpr auto permutexvar = _vmath ## _prefix ## _permutexvar_ ## _postfix; \
     static constexpr auto extract = _vmath_mm_extract_epi(_base_bits, __m ## _type_bits ## i, _prefix); \
-    static constexpr auto abs = [](type& v) { \
+    static constexpr auto abs = [](const type& v) { \
         __m ## _type_bits ## i minus1 = _prefix ## _set1_epi32(-1); \
         _type mask = _prefix ## _castsi ## _type_bits ## _ ## _postfix(_prefix ## _srli_epi ## _base_bits(minus1, 1)); \
         return _prefix ## _and_ ## _postfix(mask, v); \
@@ -102,6 +103,7 @@ struct vtype {
     static constexpr auto maskz_sub = _prefix ## _maskz_sub_ ## _postfix; \
     static constexpr auto cmpeq = _prefix ## _cmpeq_ ## _postfix; \
     static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix; \
+    static constexpr auto testz = _prefix ## _testz_si ## _type_bits; \
     static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix; \
     static constexpr auto mask_sqrt = _prefix ## _mask_sqrt_ ## _postfix; \
     static constexpr auto maskz_sqrt = _prefix ## _maskz_sqrt_ ## _postfix; \

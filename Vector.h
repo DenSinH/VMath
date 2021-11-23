@@ -330,7 +330,7 @@ struct Vector {
     }
 
     Vector<T, n> operator!() const {
-        return Vector<T, n>{-1}.andnot(*this);
+        return Vector<T, n>{(T)-1}.andnot(*this);
     }
 
     Vector<T, n> abs() const { return Vector<T, n>{type::abs(base)}; }
@@ -375,7 +375,7 @@ struct Vector {
 
     template<Compatible<T> S>
     Vector<T, n> andnot(const Vector<S, n>& other) const {
-        return Vector<T, n>{type::andnot(base, other.base)};
+        return Vector<T, n>{type::andnot(other.base, base)};
     }
 
     template<Compatible<T> S>
@@ -445,6 +445,15 @@ struct Vector {
 
     Vector<T, n> maskz_clamp(T min, T max, mask_t mask) const {
         return maskz_clamp(Vector<T, n>{min}, Vector<T, n>{max}, mask);
+    }
+
+    template<Compatible<T> S>
+    bool testz(const Vector<S, n>& other) const {
+        return type::testz(base, other.base);
+    }
+
+    bool all_zero() const {
+        return testz(*this);
     }
 
     VMATH_IOP_HELPER(+)
