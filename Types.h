@@ -105,11 +105,7 @@ struct vtype {
     static constexpr auto cmpgt = _prefix ## _cmpgt_ ## _postfix; \
     static constexpr auto testz = _prefix ## _testz_si ## _type_bits; \
     static constexpr auto sqrt = _prefix ## _sqrt_ ## _postfix; \
-    static constexpr auto mask_sqrt = _prefix ## _mask_sqrt_ ## _postfix; \
-    static constexpr auto maskz_sqrt = _prefix ## _maskz_sqrt_ ## _postfix; \
-    static constexpr auto rsqrt = _prefix ## _rsqrt14_ ## _postfix; \
-    static constexpr auto mask_rsqrt = _prefix ## _mask_rsqrt14_ ## _postfix; \
-    static constexpr auto maskz_rsqrt = _prefix ## _maskz_rsqrt14_ ## _postfix; \
+    static constexpr auto rsqrt = _prefix ## _rsqrt_ ## _postfix; \
     static constexpr auto min = _prefix ## _min_ ## _postfix; \
     static constexpr auto mask_min = _prefix ## _mask_min_ ## _postfix; \
     static constexpr auto maskz_min = _prefix ## _maskz_min_ ## _postfix; \
@@ -194,6 +190,8 @@ VMATH_TYPEM256I_HELPER(64);
 #define _vmath_mm256_permutexvar_pd [](auto idx, auto a) { return _mm256_permutexvar_pd(a, idx); }
 #define _mm_rcp_pd nullptr  // todo
 #define _mm256_rcp_pd nullptr  // todo
+#define _mm_rsqrt_pd nullptr  // todo
+#define _mm256_rsqrt_pd nullptr  // todo
 
 
 VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);

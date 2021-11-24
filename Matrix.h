@@ -34,6 +34,12 @@ struct Matrix {
         }
     }
 
+    template<typename... Args>
+    requires (sizeof...(Args) == m) && (std::is_same_v<Args, Vector<T, n>> && ...)
+    constexpr Matrix(const Args... args) : columns{args...} {
+
+    }
+
     template<size_t i, size_t j>
     T get() const {
         return columns[j].template get<i>();
@@ -91,7 +97,7 @@ struct Matrix {
         return *this;
     }
 
-    Matrix<T, n, m>& operator+=(Matrix<T, n, m>& other) {
+    Matrix<T, n, m>& operator+=(const Matrix<T, n, m>& other) {
         for (int i = 0; i < m; i++) {
             columns[i] += other.columns[i];
         }

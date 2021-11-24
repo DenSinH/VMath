@@ -248,7 +248,7 @@ struct Vector {
     template<size_t _n>
     requires (8 * sizeof(T) * _n <= 256) && (_n >= n)
     Vector<T, _n> extend() const {
-        return {base};
+        return Vector<T, _n>{base}.maskz_add(Vector<T, _n>{}, (1 << n) - 1);
     }
 
     template<size_t _n>
@@ -354,34 +354,8 @@ struct Vector {
         return Vector<T, n>{type::sqrt(base)};
     }
 
-    template<Compatible<T> S>
-    Vector<T, n> mask_sqrt(mask_t mask, const Vector<S, n>& src) const {
-        return Vector<T, n>{type::mask_sqrt(src.base, mask, base)};
-    }
-
-    Vector<T, n> mask_sqrt(mask_t mask) const {
-        return mask_sqrt(mask, *this);
-    }
-
-    Vector<T, n> maskz_sqrt(mask_t mask) const {
-        return Vector<T, n>{type::maskz_sqrt(mask, base)};
-    }
-
     Vector<T, n> rsqrt() const {
         return Vector<T, n>{type::rsqrt(base)};
-    }
-
-    template<Compatible<T> S>
-    Vector<T, n> mask_rsqrt(mask_t mask, const Vector<S, n>& src) const {
-        return Vector<T, n>{type::mask_rsqrt(src.base, mask, base)};
-    }
-
-    Vector<T, n> mask_rsqrt(mask_t mask) const {
-        return mask_rsqrt(mask, *this);
-    }
-
-    Vector<T, n> maskz_rsqrt(mask_t mask) const {
-        return Vector<T, n>{type::maskz_rsqrt(mask, base)};
     }
 
     Vector<T, n> reciprocal() const {
@@ -392,6 +366,15 @@ struct Vector {
     T sum() const {
         auto coords = data();
         return std::accumulate(coords.begin(), coords.begin() + n, (T)0);
+    }
+
+    template<Compatible<T> S>
+    T dot(const Vector<S, n>& other) const {
+        return ((*this) * other).sum();
+    }
+
+    Vector<T, n> normalize() const {
+        return (*this) * Vector<T, n>{dot(*this)}.rsqrt();
     }
 
     template<Compatible<T> S>
