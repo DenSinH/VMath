@@ -391,7 +391,7 @@ struct Vector {
 
     T sum() const {
         auto coords = data();
-        return std::accumulate(coords.begin(), coords.begin() + n, 0);
+        return std::accumulate(coords.begin(), coords.begin() + n, (T)0);
     }
 
     template<Compatible<T> S>
