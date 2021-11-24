@@ -147,7 +147,7 @@ struct Vector {
     static_assert(n * sizeof(T) * 8 <= 256);
 
     using sT = detail::try_make_signed_t<T>;
-    static constexpr size_t base_n = (8 * sizeof(T) * n < 128) ? 128 / (8 * sizeof(T)) : 256 / (8 * sizeof(T));
+    static constexpr size_t base_n = (8 * sizeof(T) * n <= 128) ? 128 / (8 * sizeof(T)) : 256 / (8 * sizeof(T));
     using type = vtype<sT, base_n>;
     using mask_t = std::uint32_t;
 
@@ -192,7 +192,7 @@ struct Vector {
 
     void store(T* dest) const {
         if constexpr(std::is_integral_v<T>) {
-            type::store(reinterpret_cast<vmath::vtype_t<sT, n>*>(dest), base);
+            type::store(reinterpret_cast<vmath::vtype_t<sT, base_n>*>(dest), base);
         }
         else {
             type::store(dest, base);
@@ -229,7 +229,7 @@ struct Vector {
         if constexpr(std::is_same_v<detail::try_make_signed_t<T>, detail::try_make_signed_t<To>>) {
             return return_t{base};
         }
-        else if constexpr((8 * sizeof(T) * base_n == 128) && (8 * sizeof(To) * n < 128)) {
+        else if constexpr((8 * sizeof(T) * base_n == 128) && (8 * sizeof(To) * n <= 128)) {
             return return_t{vcast<T, detail::try_make_signed_t<To>>::cast128(base)};
         }
         else {
@@ -240,6 +240,12 @@ struct Vector {
     template<typename To, typename return_t = Vector<To, (n * sizeof(T)) / sizeof(To)>>
     return_t reinterpret() const {
         return return_t{base};
+    }
+
+    template<size_t _n>
+    requires (8 * sizeof(T) * _n <= 256) && (_n >= n)
+    Vector<T, _n> extend() const {
+        return Vector<T, _n>{base};
     }
 
     VMATH_BASIC_OPERATOR_HELPER(+, add)
