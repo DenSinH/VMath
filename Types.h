@@ -116,6 +116,7 @@ struct vtype {
     static constexpr auto max = _prefix ## _max_ ## _postfix; \
     static constexpr auto mask_max = _prefix ## _mask_max_ ## _postfix; \
     static constexpr auto maskz_max = _prefix ## _maskz_max_ ## _postfix; \
+    static constexpr auto recp = _prefix ## _rcp_ ## _postfix; \
 }
 
 #define VMATH_TYPEM128I_HELPER(_size) VMATH_INTEGRAL_TYPE_HELPER(_size, __m128i, 128, _mm)
@@ -191,6 +192,8 @@ VMATH_TYPEM256I_HELPER(64);
 #define _vmath_mm_permutexvar_pd [](auto idx, auto a) { return _mm_permutexvar_pd(a, idx); }
 #define _vmath_mm256_permutexvar_ps [](auto idx, auto a) { return _mm256_permutexvar_ps(a, idx); }
 #define _vmath_mm256_permutexvar_pd [](auto idx, auto a) { return _mm256_permutexvar_pd(a, idx); }
+#define _mm_rcp_pd nullptr  // todo
+#define _mm256_rcp_pd nullptr  // todo
 
 
 VMATH_FP_TYPE_HELPER(float, 32, __m128, 128, _mm, ps);

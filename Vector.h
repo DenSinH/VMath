@@ -5,6 +5,7 @@
 #include <array>
 #include <bit>
 #include <tuple>
+#include <numeric>
 
 
 namespace vmath {
@@ -160,7 +161,9 @@ struct Vector {
     }
 
     Vector(T value) : base(type::set1(value)) {
-
+        if constexpr(n != base_n) {
+            base = maskz_add(Vector<T, n>{}, (1 << n) - 1).base;
+        }
     }
 
     Vector() : base(type::setzero()) {
@@ -245,7 +248,13 @@ struct Vector {
     template<size_t _n>
     requires (8 * sizeof(T) * _n <= 256) && (_n >= n)
     Vector<T, _n> extend() const {
-        return Vector<T, _n>{base};
+        return {base};
+    }
+
+    template<size_t _n>
+    requires (_n <= n)
+    Vector<T, _n> shorten() const {
+        return Vector<T, _n>{maskz_add(Vector<T, n>{}, (1 << _n) - 1).base};
     }
 
     VMATH_BASIC_OPERATOR_HELPER(+, add)
@@ -350,12 +359,10 @@ struct Vector {
         return Vector<T, n>{type::mask_sqrt(src.base, mask, base)};
     }
 
-    template<Compatible<T> S>
     Vector<T, n> mask_sqrt(mask_t mask) const {
         return mask_sqrt(mask, *this);
     }
 
-    template<Compatible<T> S>
     Vector<T, n> maskz_sqrt(mask_t mask) const {
         return Vector<T, n>{type::maskz_sqrt(mask, base)};
     }
@@ -369,14 +376,22 @@ struct Vector {
         return Vector<T, n>{type::mask_rsqrt(src.base, mask, base)};
     }
 
-    template<Compatible<T> S>
     Vector<T, n> mask_rsqrt(mask_t mask) const {
         return mask_rsqrt(mask, *this);
     }
 
-    template<Compatible<T> S>
     Vector<T, n> maskz_rsqrt(mask_t mask) const {
         return Vector<T, n>{type::maskz_rsqrt(mask, base)};
+    }
+
+    Vector<T, n> reciprocal() const {
+        static_assert(std::is_floating_point_v<T>);
+        return Vector<T, n>{type::recp(base)};
+    }
+
+    T sum() const {
+        auto coords = data();
+        return std::accumulate(coords.begin(), coords.begin() + n, 0);
     }
 
     template<Compatible<T> S>
@@ -482,6 +497,11 @@ template<typename T>
 using Vect128 = Vector<T, 128 / (8 * sizeof(T))>;
 template<typename T>
 using Vect256 = Vector<T, 256 / (8 * sizeof(T))>;
+
+template<typename... Args>
+constexpr std::uint32_t Mask(Args... args) {
+    return ((1 << args) | ...);
+}
 
 #undef VMATH_IOP_HELPER
 #undef VMATH_BASIC_OPERATOR_HELPER
